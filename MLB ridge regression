@@ -1,0 +1,126 @@
+# Get data from API in JSON format
+
+import pandas as pd
+import requests
+import numpy as np
+from operator import delitem
+import csv
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import Ridge
+
+url = "https://v1.baseball.api-sports.io/games?league=1&season=2022"
+
+payload={}
+headers = {
+  'x-rapidapi-key': '1ae57e7a748cd2bb05d6fd7321c4747a',
+  'x-rapidapi-host': 'v1.baseball.api-sports.io'
+}
+
+response = requests.request("GET", url, headers=headers, data=payload)
+
+data = response.json()
+
+y = data.get('response')
+
+
+# Function to parse JSON
+
+def game_results(num):
+  
+  y = data.get('response')
+  x = (y[num]).get('teams')
+
+  a = x.get('away')
+  b = x.get('home')
+
+  away_team = a.get('name')
+  home_team = b.get('name')
+
+
+  z = (y[num]).get('scores')
+
+  c = z.get("home")
+  d = z.get('away')
+
+  home_score = c.get('total')
+  away_score = d.get('total')
+
+
+
+  return(home_team,home_score, away_team, away_score)
+  
+  
+  
+# Write function data to csv ( make a blank file called 'data.csv')
+  
+  
+  csv_file = open("data.csv", 'w')
+
+csv_writer = csv.writer(csv_file, delimiter=",")
+
+for i in range(len(y)):
+  csv_writer.writerow(game_results(i))
+
+csv_file.close()
+
+
+# Getting CSV data into Data Frame (last 2 lines needed in some years)
+
+df = pd.read_csv('data.csv')
+
+df.columns = ['home', 'home_runs', 'away','away_runs']
+
+df['run_difference'] = df['home_runs'] - df['away_runs']
+
+df['home_win'] = np.where(df['run_difference'] < 0,1,0)
+df['home_loss'] = np.where(df['run_difference'] > 0,1,0)
+
+
+df_visitor = pd.get_dummies(df['away'], dtype=np.int64)
+df_home = pd.get_dummies(df['home'], dtype=np.int64)
+
+
+df_model = df_home.sub(df_visitor)
+df_model['run_difference'] = df['run_difference']
+
+
+#df_model = df_model.drop('American League', axis=1)
+#df_model = df_model.drop('National League', axis=1)
+
+
+
+# Function to clean data
+
+def clean_dataset(df):
+    assert isinstance(df, pd.DataFrame), "df needs to be a pd.DataFrame"
+    df.dropna(inplace=True)
+    indices_to_keep = ~df.isin([np.nan, np.inf, -np.inf]).any(1)
+    return df[indices_to_keep].astype(np.float64)
+
+
+df_model = clean_dataset(df_model)
+
+
+# Training ridge regression
+
+df_train = df_model
+
+lr = Ridge(alpha=0.001) 
+X = df_train.drop(['run_difference'], axis=1)
+
+y = df_train['run_difference']
+
+
+lr.fit(X,y)
+
+
+# Show sorted coefficents
+
+df_ratings = pd.DataFrame(data={'team': X.columns, 'rating': lr.coef_})
+df_ratings.sort_values(by=['rating'], ascending=False)
+
+
+
+
+
+
