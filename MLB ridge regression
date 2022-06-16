@@ -120,6 +120,42 @@ df_ratings = pd.DataFrame(data={'team': X.columns, 'rating': lr.coef_})
 df_ratings.sort_values(by=['rating'], ascending=False)
 
 
+# function to predict winner
+
+
+def predicted_winner(team_1, team_2):
+  
+  valid_teams = {'New York Yankees', 'Toronto Blue Jays', 'New York Mets', 'Los Angeles Dodgers',
+                   'St.Louis Cardinals',
+                   'Boston Red Sox', 'Houston Astros', 'Texas Rangers', 'Los Angeles Angels', 'San Francisco Giants',
+                   'Philadelphia Phillies', 'Miami Marlins', 'Atlanta Braves', 'San Diego Padres', 'Minnesota Twins',
+                   'Tampa Bay Rays', 'Cleveland Guardians', 'Seattle Mariners', 'Milwaukee Brewers',
+                   'Arizona Diamondbacks',
+                   'Cincinnati Reds', 'Baltimore Orioles', 'Chicago White Sox', 'Chicago Cubs', 'Colorado Rockies',
+                   'Detroit Tigers', 'Oakland Athletics', 'Kansas City Royals', 'Washington Nationals',
+                   'Pittsburgh Pirates'
+
+                   }
+  if team_1 and team_2 not in valid_teams:
+        raise ValueError("results: status must be one of %r." % valid_teams)
+  
+  
+  team_1_rating = df_ratings.iloc[df_ratings[df_ratings['team']== team_1].index.values.astype(int)[0]]['rating']
+  team_2_rating = df_ratings.iloc[df_ratings[df_ratings['team']== team_2].index.values.astype(int)[0]]['rating']
+
+  if team_1_rating > team_2_rating:
+    print('The', team_1, 'rating is', round(team_1_rating, 3),'.','The', team_1, "are rated", round((team_1_rating- team_2_rating),3), 'points higher than the', team_2,'.' )
+  else:
+    print('The', team_2, 'rating is', round(team_2_rating, 3),'.','The', team_2, "are rated", round((team_2_rating- team_1_rating),3), 'points higher than the', team_1,  )
+
+
+
+predicted_winner('Washington Nationals', 'Philadelphia Phillies')
+
+#return : The Philadelphia Phillies rating is 0.546 . The Philadelphia Phillies are rated 1.865 points higher than the Washington Nationals
+
+
+
 
 
 
